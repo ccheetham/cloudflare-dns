@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -e
+
+token=$(lpass show 'Spring Cloudflare: DNS' \
+  | grep '^token:' \
+  | awk '{print $2}' \
+  | tr -d '\n')
+echo -n $token
+
+# vim: ft=bash

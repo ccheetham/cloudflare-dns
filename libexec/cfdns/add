@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+set -e
+
+command=$(basename $0)
+source $(dirname $0)/../../etc/profile
+
+domain=
+name=
+content=
+ttl=3600
+type=A
+proxied=false
+yes=false
+
+help_usage() {
+  echo "$PROGRAM $command [-h] -d <domain> -n <name> -c <content> [-t <type>] [-l <ttl>] [-y]"
+}
+
+help_where() {
+  echo "-c      DNS content; e.g. IP address or alias"
+  echo "-d      domain name"
+  echo "-n      DNS host(without the domain)"
+  echo "-l      DNS record TTL; default $ttl"
+  echo "-t      DNS record type; default $type"
+  echo "-y      do not prompt for confirmation"
+  echo "-h      print this message"
+}
+
+help_description() {
+  echo "List DNS entry record."
+}
+
+while getopts ":c:d:l:n:t:yh" opt ; do
+  case $opt in
+    c)
+      content=$OPTARG
+      ;;
+    d)
+      domain=$OPTARG
+      ;;
+    l)
+      ttl=$OPTARG
+      ;;
+    n)
+      name=$OPTARG
+      ;;
+    t)
+      type=$OPTARG
+      ;;
+    y)
+      yes=true
+      ;;
+    h)
+      help
+      exit
+      ;;
+    \?)
+      echo "invalid option -$OPTARG" 2>&1
+      echo "run with -h for help" 2>&1
+      exit 1
+      ;;
+    :)
+      echo "option -$OPTARG requires an argument" 2>&1
+      echo "run with -h for help" 2>&1
+      exit 1
+      ;;
+  esac
+done
+shift $(($OPTIND-1))
+
+if [[ $# -gt 0 ]]; then
+  die "too many args; run with -h for help"
+fi
+
+if [[ -z $domain ]]; then
+  die "domain not specified; run with -h for help"
+fi
+
+if [[ -z $name ]]; then
+  die "name not specified; run with -h for help"
+fi
+
+if [[ -z $content ]]; then
+  die "content not specified; run with -h for help"
+fi
+
+if ! $yes ; then
+  format="%-10s : %s\n"
+  printf "$format" "domain" "$domain"
+  printf "$format" "name" "$name"
+  printf "$format" "content" "$content"
+  printf "$format" "type" "$type"
+  printf "$format" "TTL" "$ttl"
+  printf "$format" "proxied" "$proxied"
+  echo -en "\nproceed [y/N]? "
+  read answer
+  if [[ ! $answer = "y" ]]; then
+    exit
+  fi
+fi
+
+zone=$($COMMAND_DIR/zone -d $domain)
+
+$COMMAND_DIR/api -m POST -e "zones/${zone}/dns_records/" -d '{"name":"'$name'","content":"'$content'","type":"'$type'","TTL":'$ttl',"proxied":'$proxied'}' | jq .
+exit
+PIPENV_PIPFILE=/Users/ccheetham/Pipfile pipenv run \
+  http POST "${CF_API}/zones/${zone}/dns_records/" \
+  "Authorization:Bearer ${token}" \
+  "name=${name}" \
+  "content=${content}" \
+  "type=${type}" \
+  "TTL:=${ttl}" \
+  "proxied:=${proxied}"
+
+

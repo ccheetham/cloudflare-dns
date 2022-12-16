@@ -1,0 +1,58 @@
+msg() {
+  echo "--- $1"
+}
+
+err() {
+  echo "!!! $1" >&2
+}
+
+die() {
+  if [[ $# -gt 0 ]]; then
+    err "$*"
+  fi
+  exit 1
+}
+
+has_command() {
+  local command=$1
+  command -v $command > /dev/null
+}
+
+help_indent() {
+  echo -n "      "
+}
+
+help_usage() {
+  echo -n ""
+}
+
+help_where() {
+  echo -n ""
+}
+
+help_description() {
+  echo -n ""
+}
+
+help_section() {
+  local section=$1
+  local text=$2
+  local oldifs="$IFS"
+  IFS=$'\n'
+  if [[ -n "$text" ]] ; then
+    echo $section
+    for line in $text ; do
+      help_indent
+      echo $line
+    done
+  fi
+  IFS="$oldifs"
+}
+
+help() {
+  help_section "USAGE" "$(help_usage)"
+  help_section "WHERE" "$(help_where)"
+  help_section "DESCRIPTION" "$(help_description)"
+}
+
+# vim: ft=bash

@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+set -e
+
+prog=$(basename $0)
+source $(dirname $0)/../etc/profile
+
+help() {
+  cat << EOF
+USAGE
+$(help_indent)$prog [-h] <command> ...
+WHERE
+EOF
+  help_indent
+  echo "command one of:"
+  for cmd in $COMMAND_DIR/* ; do
+    help_indent
+    help_indent
+    echo $(basename $cmd)
+  done
+  cat << EOF
+OPTIONS
+$(help_indent)-h              display this message
+NOTES
+$(help_indent)Run "$prog <command> -h" for command help.
+EOF
+}
+
+while getopts ":h" opt ; do
+  case $opt in
+    h)
+      help
+      exit
+      ;;
+    :)
+      echo "-$OPTARG requires an argument" >&2
+      echo "run with -h for help" >&2
+      exit 1
+      ;;
+    \?)
+      echo "invalid option -$OPTARG" >&2
+      echo "run with -h for help" >&2
+      exit 1
+      ;;
+  esac
+done
+shift $(($OPTIND-1))
+
+if [[ $# -eq 0 ]] ; then
+  die "command not specified; run with -h for help"
+fi
+
+cmd=$COMMAND_DIR/$1
+shift
+
+if [[ ! -x $cmd ]] ; then
+  die "command not found: $(basename $cmd)"
+fi
+
+PROGRAM=$prog \
+  exec $cmd $@
+
+# vim: ft=bash

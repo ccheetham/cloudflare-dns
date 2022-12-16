@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+set -e
+
+command=$(basename $0)
+source $(dirname $0)/../../etc/profile
+
+method=GET
+endpoint=
+data=
+
+help_usage() {
+  echo "$PROGRAM $command [-h] -e <endpoint> [-m <method>] [-d <data>]"
+}
+
+help_where() {
+  echo "-e      endpoint URL"
+  echo "-d      HTTP data"
+  echo "-m      HTTP method; default $method"
+  echo "-h      print this message"
+}
+
+help_description() {
+  echo "Invoke the Cloudflare API at a specified endpoint."
+}
+
+while getopts ":d:e:m:h" opt ; do
+  case $opt in
+    d)
+      data="--data $OPTARG"
+      ;;
+    e)
+      endpoint=$OPTARG
+      ;;
+    m)
+      method=$OPTARG
+      ;;
+    h)
+      help
+      exit
+      ;;
+    \?)
+      echo "invalid option -$OPTARG" 2>&1
+      echo "run with -h for help" 2>&1
+      exit 1
+      ;;
+    :)
+      echo "option -$OPTARG requires an argument" 2>&1
+      echo "run with -h for help" 2>&1
+      exit 1
+      ;;
+  esac
+done
+shift $(($OPTIND-1))
+
+if [[ $# -gt 0 ]]; then
+  die "too many args; run with -h for help"
+fi
+
+if [[ -z $endpoint ]]; then
+  die "URL endpoint not specified; run with -h for help"
+fi
+
+curl -s \
+  -X $method \
+  "${CF_API}/${endpoint}" \
+  -H "Authorization:Bearer ${CF_API_TOKEN}" $data
+
+# vim: ft=bash

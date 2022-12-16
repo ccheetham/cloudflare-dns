@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+set -e
+
+command=$(basename $0)
+source $(dirname $0)/../../etc/profile
+
+domain=
+
+help_usage() {
+  echo "$PROGRAM $command [-h] -d <domain>"
+}
+
+help_where() {
+  echo "-d      domain name"
+  echo "-h      print this message"
+}
+
+help_description() {
+  echo "Display the Cloudflare zone ID for a domain."
+}
+
+while getopts ":d:h" opt ; do
+  case $opt in
+    d)
+      domain=$OPTARG
+      ;;
+    h)
+      help
+      exit
+      ;;
+    \?)
+      echo "invalid option -$OPTARG" 2>&1
+      echo "run with -h for help" 2>&1
+      exit 1
+      ;;
+    :)
+      echo "option -$OPTARG requires an argument" 2>&1
+      echo "run with -h for help" 2>&1
+      exit 1
+      ;;
+  esac
+done
+shift $(($OPTIND-1))
+
+if [[ $# -gt 0 ]]; then
+  die "too many args; run with -h for help"
+fi
+
+if [[ -z $domain ]]; then
+  die "domain not specified; run with -h for help"
+fi
+
+exec $COMMAND_DIR/api -e "zones?name=${domain}" \
+  | jq '.result[] | .id' \
+  | tr -d '"'
+
+# vim: ft=bash

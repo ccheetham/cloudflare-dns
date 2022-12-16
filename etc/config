@@ -1,0 +1,4 @@
+CF_API=https://api.cloudflare.com/client/v4
+CF_API_TOKEN=$($LIBEXEC_DIR/api_token)
+
+# vim: ft=bash
