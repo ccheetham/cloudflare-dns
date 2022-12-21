@@ -8,13 +8,14 @@ source $(dirname $0)/../../etc/profile
 domain=
 name=
 content=
+record_id=
 ttl=3600
 type=A
 proxied=false
 yes=false
 
 help_usage() {
-  echo "$PROGRAM $command [-h] -d <domain> -n <name> -c <content> [-t <type>] [-l <ttl>] [-p] [-y]"
+  echo "$PROGRAM $command [-h] -d <domain> -r <record_id> -n <name> -c <content> [-t <type>] [-l <ttl>] [-p] [-y]"
 }
 
 help_where() {
@@ -23,16 +24,17 @@ help_where() {
   echo "-n      DNS host(without the domain)"
   echo "-l      DNS record TTL; default $ttl"
   echo "-p      enable DNS proxy"
+  echo "-r      record ID"
   echo "-t      DNS record type; default $type"
   echo "-y      do not prompt for confirmation"
   echo "-h      print this message"
 }
 
 help_description() {
-  echo "Add DNS entry record."
+  echo "Update DNS entry record."
 }
 
-while getopts ":c:d:l:n:pt:yh" opt ; do
+while getopts ":c:d:l:n:pr:t:yh" opt ; do
   case $opt in
     c)
       content=$OPTARG
@@ -48,6 +50,9 @@ while getopts ":c:d:l:n:pt:yh" opt ; do
       ;;
     p)
       proxied=true
+      ;;
+    r)
+      record=$OPTARG
       ;;
     t)
       type=$OPTARG
@@ -81,6 +86,10 @@ if [[ -z $domain ]]; then
   die "domain not specified; run with -h for help"
 fi
 
+if [[ -z $record ]]; then
+  die "record not specified; run with -h for help"
+fi
+
 if [[ -z $name ]]; then
   die "name not specified; run with -h for help"
 fi
@@ -92,6 +101,7 @@ fi
 if ! $yes ; then
   format="%-10s : %s\n"
   printf "$format" "domain" "$domain"
+  printf "$format" "record" "$record"
   printf "$format" "name" "$name"
   printf "$format" "content" "$content"
   printf "$format" "type" "$type"
@@ -106,4 +116,4 @@ fi
 
 zone=$($COMMAND_DIR/zone -d $domain)
 
-$COMMAND_DIR/api -m POST -e "zones/${zone}/dns_records/" -d '{"name":"'$name'","content":"'$content'","type":"'$type'","TTL":'$ttl',"proxied":'$proxied'}' | jq .
+$COMMAND_DIR/api -m PUT -e "zones/${zone}/dns_records/${record}" -d '{"name":"'$name'","content":"'$content'","type":"'$type'","TTL":'$ttl',"proxied":'$proxied'}' | jq .

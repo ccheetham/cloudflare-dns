@@ -6,7 +6,7 @@ command=$(basename $0)
 source $(dirname $0)/../../etc/profile
 
 domain=
-record_id=
+record=
 
 help_usage() {
   echo "$PROGRAM $command [-h] -d <domain> -r <record_id>"
